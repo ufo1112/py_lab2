@@ -1,19 +1,10 @@
 #!/usr/bin/python
+def num1(n):
+    num=int(n,2)
+    num8 = format(num,'o')
+    num16 = format(num, 'X')
+    return("=> OCT> %s \n=> DEC> %s \n=> HEX> %s" %(num8,num,num16))
 
-def num2(b1, b2):
+if __name__=='__main__':
+        print("exit")
 
-
-    b3 = list(set(b1).intersection(set(b2)))
-    b4 = list(set(b1)-set(b3))
-    b5 = b1 + b2
-    b6 = list(set(b5))
-    print('union [',end='')
-    for i in range(len(b6)-1):
-        print(b6[i],end=',')
-    print(b6[len(b6)-1],end='')
-    print(']')
-    print('intersection [',end='')
-    for i in range(len(b3)-1):
-        print(b3[i],end=',')
-    print(b3[len(b3)-1],end='')
-    print(']')
