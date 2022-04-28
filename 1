@@ -1,33 +1,139 @@
-vector<int> res;
-decode(root, res, incoder);
-// decode를 할 시 map<,> incoder가 완성된다.
-int t1, t2;
-cin >> t1;
-for (int i = 0; i < t1; i++) {
-    string input; cin >> input;
-    for (int j = 0; j < input.size(); j++) for (auto& iter: incoder[input[j]]) cout << iter;
-    // 문자를 하나 씩 읽으면서 그에 맞는 이진수 코드를 incoder[]로 확인하여 출력한다.
-    cout << endl;
+#include <iostream>
+#include <vector>
+#include <cstdlib>
+#include <queue>
+#include <string>
+#include <map>
+#define endl "\n"
+using namespace std;
+typedef struct node* node_ptr;
+typedef struct node {
+   char symbol; // the value of a character.
+   int frequency; // the number of times the character is in the file.
+   node_ptr left;
+   node_ptr right;
+} node_t;
+struct compare { // 바로 밑 우선순위큐를 정렬하기 위해서 만든 struct이다.
+   bool operator()(node_ptr p, node_ptr q) {
+      return p->frequency > q->frequency; // 이 코드가 주어지지 않는다면 우선순위큐는 더 큰 정수를 찾아 정렬하려고 할 것이다
+      // 그러나 우선순위큐에는 정수가 아닌 node_t가 들어가 있으므로, 에러가 난다.
+   }
+};
+typedef priority_queue<node_ptr, vector<node_ptr>, compare> PriorityQueue;
+// PriorityQueue<자료형, container, 비교방법>이다.
+// node_ptr로된 우선순위큐에는 vector<node_ptr>로 된 컨테이너가 필요하다.
+// 보통 정수의 우선순위큐라면 PriorityQueue<int> pq;로만 선언한다.
+// 그러나 특이한 비교가 필요한 경우, 예를 들어 반대로 정렬한다던지, 혹은 node_t->frequency로 정렬한다던지
+// 그럴 경우 container을 명시하며, compare을 삽입하여야 한다. 
+void huffman(int n, PriorityQueue& PQ) {
+    // 허프만 코드를 돌리면 인수로 주어진 우선순위 큐의 맨 앞에(top에) root노드의 주소가 주어진다
+    // 그리고 밑의 for문으로 인하여 허프만 코드 알고리즘대로 연결된다
+    for (int i = 1; i <= n - 1; i++) {
+        node_ptr p = PQ.top(); PQ.pop();
+        node_ptr q = PQ.top(); PQ.pop();
+        node_ptr r = (node_ptr)malloc(sizeof(node)); 
+        // node_ptr로 된 r을 선언하기전 메모리를 할당하여 준다.
+        // node_ptr r = (node_ptr)malloc(sizeof(node)); 에서 (node_ptr)을 선언한 이유는
+        // C++은 malloc에서 형변환을 직접 지정해야 한다.
+        // C에서는 node_ptr r = malloc(sizeof(node));로 선언해도 된다.
+        r->symbol = '+';
+        r->frequency = p->frequency + q->frequency;
+        r->left = p;
+        r->right = q;
+        PQ.push(r);
+   }
 }
-
-map<vector<int>, char> decoder;
-// decoder는 incoder를 뒤집은 것이다.
-for (auto iter = incoder.begin(); iter != incoder.end() ; iter++) decoder[iter->second] = iter->first;
-// map을 auto로 받게되면, key는 (map)->first에 value는 (map)->second에 저장이된다
-cin >> t2;
-for (int i = 0; i < t2; i++) {
-    string input; cin >> input;
-    vector<int> key;
-    for (int j = 0; j <= input.size(); j++) { 
-    // 마지막에 cout을 하지 않아서 j '<=' input.size()를 하였다.
-    // j가 input.size()일때 input[j]를 참조한다면 코드에서 에러가 날 것
-        if (decoder.find(key) == decoder.end()) key.push_back(int(input[j]) - '0');
-        // - '0'을 한 이유는 input을 string으로 받았기 때문이다.
-        else {
-            cout << decoder[key];
-            key.clear();
-            key.push_back(int(input[j]) - '0');
-        }
+map<char, vector<int>> incoder; 
+// C++의 map의 내부 구현은 검색, 삽입, 삭제가 O(logn) 인 레드블랙트리로 구성되어 있다.
+// map은 주로 어떤 문자, 문자열에 숫자를 부여할때 사용한다
+// 예를 들어 a = 17, b = 28을 사용해야할때
+// hello = 1, bye = 2같은 것을 사용해야할때 주로 사용한다.
+void decode(node_ptr root, vector<int>& code, map<char, vector<int>>& decoder)
+{
+    // decode를 돌릴 시 map<,> incoder가 완성된다.
+    if (root->symbol != '+') { // 문자에 도착 하였을 때
+        vector<int> ret;
+        ret.resize(code.size());
+        copy(code.begin(), code.end(), ret.begin()); 
+        // ret에 code를 넣는다.
+        decoder.insert(make_pair(root->symbol, ret));
+        // decoder[root->symbol] = ret;로 선언해도 됨
+   }
+   else if (root != NULL) { // 문자에 도착하지 않았고, 빈 노드가 아닐 때
+        code.push_back(0);// 왼쪽으로 갈때는 0
+        decode(root->left, code, decoder); 
+        code.pop_back(); // pop_back을 하지 않으면 이후 중복이 됨
+        code.push_back(1); // 오른쪽으로 갈때는 1
+        decode(root->right, code, decoder);
+        code.pop_back(); // pop_back을 하지 않으면 이후 중복이 됨
+   }
+}
+void inorder(node_ptr n) {
+   if (n == NULL) return;
+   cout << n->symbol << ":" << n->frequency << " ";
+   inorder(n->left);
+   inorder(n->right);
+}
+void preorder(node_ptr n) {
+   if (n == NULL) return;
+   preorder(n->left);
+   cout << n->symbol << ":" << n->frequency << " ";
+   preorder(n->right);
+}
+int main() {
+   int n;
+   cin >> n;
+   char arr[1000];
+   for (int i = 0; i < n; i++) cin >> arr[i];
+   int freq[1000];
+   for (int i = 0; i < n; i++) cin >> freq[i];
+   PriorityQueue pq;
+   for (int i = 0; i < n; i++) {
+      node_ptr r = (node_ptr)malloc(sizeof(node)); // 위의 함수와 마찬가지
+      r->symbol = arr[i];
+      r->frequency = freq[i];
+      r->left = NULL;
+      r->right = NULL;
+      pq.push(r);
     }
+    huffman(n, pq);
+    node_ptr root = pq.top(); // 맨 앞에 루트노드의 주소가 주어진다.
+    inorder(root);
     cout << endl;
+    preorder(root);
+    cout << endl;
+    
+    vector<int> res;
+    decode(root, res, incoder);
+    // decode를 할 시 map<,> incoder가 완성된다.
+    int t1, t2;
+    cin >> t1;
+    for (int i = 0; i < t1; i++) {
+        string input; cin >> input;
+        for (int j = 0; j < input.size(); j++) for (auto& iter: incoder[input[j]]) cout << iter;
+        // 문자를 하나 씩 읽으면서 그에 맞는 이진수 코드를 incoder[]로 확인하여 출력한다.
+        cout << endl;
+    }
+    
+    map<vector<int>, char> decoder;
+    // decoder는 incoder를 뒤집은 것이다.
+    for (auto iter = incoder.begin(); iter != incoder.end() ; iter++) decoder[iter->second] = iter->first;
+    // map을 auto로 받게되면, key는 (map)->first에 value는 (map)->second에 저장이된다
+    cin >> t2;
+    for (int i = 0; i < t2; i++) {
+        string input; cin >> input;
+        vector<int> key;
+        for (int j = 0; j <= input.size(); j++) { 
+        // 마지막에 cout을 하지 않아서 j '<=' input.size()를 하였다.
+        // j가 input.size()일때 input[j]를 참조한다면 코드에서 에러가 날 것
+            if (decoder.find(key) == decoder.end()) key.push_back(int(input[j]) - '0');
+            // - '0'을 한 이유는 input을 string으로 받았기 때문이다.
+            else {
+                cout << decoder[key];
+                key.clear();
+                key.push_back(int(input[j]) - '0');
+            }
+        }
+        cout << endl;
+    }
 }
