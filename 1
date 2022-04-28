@@ -1,0 +1,33 @@
+vector<int> res;
+decode(root, res, incoder);
+// decode를 할 시 map<,> incoder가 완성된다.
+int t1, t2;
+cin >> t1;
+for (int i = 0; i < t1; i++) {
+    string input; cin >> input;
+    for (int j = 0; j < input.size(); j++) for (auto& iter: incoder[input[j]]) cout << iter;
+    // 문자를 하나 씩 읽으면서 그에 맞는 이진수 코드를 incoder[]로 확인하여 출력한다.
+    cout << endl;
+}
+
+map<vector<int>, char> decoder;
+// decoder는 incoder를 뒤집은 것이다.
+for (auto iter = incoder.begin(); iter != incoder.end() ; iter++) decoder[iter->second] = iter->first;
+// map을 auto로 받게되면, key는 (map)->first에 value는 (map)->second에 저장이된다
+cin >> t2;
+for (int i = 0; i < t2; i++) {
+    string input; cin >> input;
+    vector<int> key;
+    for (int j = 0; j <= input.size(); j++) { 
+    // 마지막에 cout을 하지 않아서 j '<=' input.size()를 하였다.
+    // j가 input.size()일때 input[j]를 참조한다면 코드에서 에러가 날 것
+        if (decoder.find(key) == decoder.end()) key.push_back(int(input[j]) - '0');
+        // - '0'을 한 이유는 input을 string으로 받았기 때문이다.
+        else {
+            cout << decoder[key];
+            key.clear();
+            key.push_back(int(input[j]) - '0');
+        }
+    }
+    cout << endl;
+}
