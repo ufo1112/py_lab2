@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#define endl        "\n"
+#define inf     -2000000000
+using namespace std;
+struct node {
+    int v;
+    node* l;
+};
+void print(node n);
+vector<int> output;
+int c;
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    int n, idx = 0; cin >> n;
+    vector<int> numbers(n);
+    for (int i = 0; i < n; i++) cin >> numbers[i];
+    vector<int> dp(n + 1, inf);
+    vector<int> size(n + 1);
+    dp.push_back(inf);
+    for (int i = 0; i < n; i++) {
+        int number = numbers[i];
+        if (dp[idx] < number) {
+            dp[++idx] = number;
+            size[idx]++;
+        }
+        else {
+            auto it = lower_bound(dp.begin(), dp.begin() + idx, number);
+            *it = number;
+            size[it - dp.begin()]++;
+        }
+    }
+    cout << idx << endl;
+    
+    dp = vector<int>(n + 1, inf);
+    vector<node> trac[idx + 1];
+    for (int i = 0; i <= idx; i++) trac[i] = vector<node>(size[i] * 2);
+    vector<int> tracsize(idx + 1);
+    idx = 0;
+
+    for (int i = 0; i < n; i++) {
+        int number = numbers[i];
+        if (dp[idx] < number) {
+            dp[++idx] = number;
+            trac[idx][++tracsize[idx]].v = number;
+            trac[idx][tracsize[idx]].l = new node;
+            trac[idx][tracsize[idx]].l = &trac[idx - 1][tracsize[idx - 1]];
+        }
+        else {
+            auto it = lower_bound(dp.begin(), dp.begin() + idx, number);
+            int lo = it - dp.begin();
+            *it = number;
+            trac[lo][++tracsize[lo]].v = number;
+            trac[lo][tracsize[lo]].l = new node;
+            trac[lo][tracsize[lo]].l = &trac[lo - 1][tracsize[lo - 1]];
+        }
+    }
+    output = vector<int>(idx);
+    print(trac[idx][tracsize[idx]]);
+    reverse(output.begin(), output.end());
+    for (auto& iter: output) cout << iter << " "; cout << endl;
+}
+void print(node n) {
+    output[c++] = n.v;
+    if (n.l == NULL) return;
+    print(*n.l);
+}
